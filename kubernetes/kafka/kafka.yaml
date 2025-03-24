@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - name: kafka
+        image: wurstmeister/kafka:latest
+        ports:
+        - containerPort: 9092
+        env:
+        - name: KAFKA_ADVERTISED_HOST_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: IP_KAFKA_BROKER
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: IP_ZOOKEEPER
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-svc
+  labels:
+    name: kafka
+spec:
+  ports:
+  - port: 9092
+    name: kafka-port
+  selector:
+    app: kafka
+

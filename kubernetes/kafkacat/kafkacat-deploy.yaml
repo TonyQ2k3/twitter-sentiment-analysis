@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kafkacat
+spec:
+  containers:
+  - name: kafkacat
+    image: edenhill/kafkacat:1.6.0
+    command: ["sleep", "31536000"]  # Keep the container running
+    env:
+    - name: KAFKA_BROKER
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: IP_KAFKA_BROKER
+  restartPolicy: Always

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  labels:
+    app: sentiment-analysis
+data:
+  IP_SPARK_MASTER: "spark-master-svc.default.svc.cluster.local"
+  IP_ZOOKEEPER: "zookeeper-svc.default.svc.cluster.local:2181"
+  IP_KAFKA_BROKER: "kafka-svc.default.svc.cluster.local"
+  IP_CASSANDRA: "cassandra-svc.default.svc.cluster.local"
