@@ -7,4 +7,4 @@ COPY . .
 RUN pip install -r requirements.txt
 
 # Run the application
-CMD ["python", "kafka_produce.py"]
+CMD ["python", "tweets_scraper.py"]
