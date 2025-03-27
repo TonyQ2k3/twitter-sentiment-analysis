@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: scraper
+  labels:
+    name: scraper
+spec:
+  containers:
+  - name: scraper
+    image: tonyq2k3/producer:0.1
+    imagePullPolicy: Always
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    env:
+    - name: BOOTSTRAP_SERVERS
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: IP_KAFKA_BROKER
+    restartPolicy: Never
