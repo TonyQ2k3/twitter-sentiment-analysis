@@ -19,37 +19,20 @@ def main():
     try:
         parser = argparse.ArgumentParser(
             add_help=True,
-            usage="python scraper [option] ... [arg] ...",
-            description="Twitter Scraper is a tool that allows you to scrape tweets from twitter without using Twitter's API.",
+            usage="python scrape [option] ... [arg] ...",
+            description="Twitter Scraper - Scrape tweets from Twitter profiles, hashtags, and bookmarks.",
         )
 
         try:
             parser.add_argument(
-                "--mail",
-                type=str,
-                default=os.getenv("TWITTER_MAIL"),
-                help="Your Twitter mail.",
-            )
-
-            parser.add_argument(
                 "--user",
                 type=str,
                 default=os.getenv("TWITTER_USERNAME"),
-                help="Your Twitter username.",
             )
-
             parser.add_argument(
                 "--password",
                 type=str,
                 default=os.getenv("TWITTER_PASSWORD"),
-                help="Your Twitter password.",
-            )
-
-            parser.add_argument(
-                "--headlessState",
-                type=str,
-                default=os.getenv("HEADLESS"),
-                help="Headless mode? [yes/no]"
             )
         except Exception as e:
             print(f"Error retrieving environment variables: {e}")
@@ -81,14 +64,6 @@ def main():
             default=None,
             help="Twitter hashtag. Scrape tweets from a hashtag.",
         )
-        
-        # Target bookmarks
-        parser.add_argument(
-            "--bookmarks",
-            action='store_true',
-            help="Twitter bookmarks. Scrape tweets from your bookmarks.",
-        )
-
         parser.add_argument(
             "-ntl",
             "--no_tweets_limit",
@@ -106,14 +81,6 @@ def main():
         )
 
         parser.add_argument(
-            "-a",
-            "--add",
-            type=str,
-            default="",
-            help="Additional data to scrape and save in the .csv file.",
-        )
-
-        parser.add_argument(
             "--latest",
             action="store_true",
             help="Scrape latest tweets",
@@ -127,19 +94,14 @@ def main():
 
         args = parser.parse_args()
 
-        USER_MAIL = args.mail
         USER_UNAME = args.user
         USER_PASSWORD = args.password
-        HEADLESS_MODE= args.headlessState
 
         if USER_UNAME is None:
             USER_UNAME = input("Twitter Username: ")
 
         if USER_PASSWORD is None:
             USER_PASSWORD = getpass.getpass("Enter Password: ")
-
-        if HEADLESS_MODE is None:
-            HEADLESS_MODE - str(input("Headless?[Yes/No]")).lower()
 
         print()
 
@@ -157,7 +119,7 @@ def main():
         additional_data: list = args.add.split(",")
 
         if len(tweet_type_args) > 1:
-            print("Please specify only one of --username, --hashtag, --bookmarks, or --query.")
+            print("Please specify only one of --username, --hashtag, or --query.")
             sys.exit(1)
 
         if args.latest and args.top:
