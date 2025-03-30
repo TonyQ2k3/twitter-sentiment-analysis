@@ -113,17 +113,14 @@ def main():
             tweet_type_args.append(args.hashtag)
         if args.query is not None:
             tweet_type_args.append(args.query)
-        if args.bookmarks is not False:
-            tweet_type_args.append(args.query)
-
-        additional_data: list = args.add.split(",")
 
         if len(tweet_type_args) > 1:
-            print("Please specify only one of --username, --hashtag, or --query.")
+            print("Specify only one of --username, --hashtag, or --query.")
             sys.exit(1)
 
+        # Check if only one of the arguments is provided
         if args.latest and args.top:
-            print("Please specify either --latest or --top. Not both.")
+            print("Sspecify either --latest or --top. Not both.")
             sys.exit(1)
 
         if USER_UNAME is not None and USER_PASSWORD is not None:
@@ -137,11 +134,9 @@ def main():
                 no_tweets_limit= args.no_tweets_limit if args.no_tweets_limit is not None else True,
                 scrape_username=args.username,
                 scrape_hashtag=args.hashtag,
-                scrape_bookmarks=args.bookmarks,
                 scrape_query=args.query,
                 scrape_latest=args.latest,
-                scrape_top=args.top,
-                scrape_poster_details="pd" in additional_data,
+                scrape_top=args.top
             )
             scraper.save_to_csv()
             if not scraper.interrupted:
