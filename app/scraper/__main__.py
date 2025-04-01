@@ -6,12 +6,11 @@ from tweets_scraper import Twitter_Scraper
 
 try:
     from dotenv import load_dotenv
-
-    print("Loading .env file")
+    print("Loading environment vars")
     load_dotenv()
-    print("Loaded .env file\n")
+    print("Loaded environment vars\n")
 except Exception as e:
-    print(f"Error loading .env file: {e}")
+    print(f"Error loading environment vars: {e}")
     sys.exit(1)
 
 
@@ -27,12 +26,12 @@ def main():
             parser.add_argument(
                 "--user",
                 type=str,
-                default=os.getenv("TWITTER_USERNAME"),
+                default=os.getenv("USER_UNAME"),
             )
             parser.add_argument(
                 "--password",
                 type=str,
-                default=os.getenv("TWITTER_PASSWORD"),
+                default=os.getenv("USER_PASSWORD"),
             )
         except Exception as e:
             print(f"Error retrieving environment variables: {e}")

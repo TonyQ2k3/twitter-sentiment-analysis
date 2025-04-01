@@ -1,0 +1,6 @@
+.env
+docker
+kubernetes
+.dockerignore
+.gitignore
+__pycache__
