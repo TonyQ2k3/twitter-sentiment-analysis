@@ -19,4 +19,14 @@ spec:
         configMapKeyRef:
           name: app-config
           key: IP_KAFKA_BROKER
+    - name: USER_UNAME
+      valueFrom:
+        secretKeyRef:
+          name: scraper-secret
+          key: USER_UNAME
+    - name: USER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: scraper-secret
+          key: USER_PASSWORD
     restartPolicy: Never
