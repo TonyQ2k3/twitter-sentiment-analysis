@@ -23,7 +23,7 @@ def not_real_tweets():
     producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
                             value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     
-    tweets = pd.read_csv("app/data/twitter_validation.csv")
+    tweets = pd.read_csv("data/twitter_validation.csv")
     
     for index, row in tweets.iterrows():
         tweet_data = {
