@@ -1,7 +1,10 @@
+from kafka import KafkaProducer
 import os
 import sys
 import argparse
 import getpass
+import pandas as pd
+import json
 from tweets_scraper import Twitter_Scraper
 
 try:
@@ -12,13 +15,32 @@ try:
 except Exception as e:
     print(f"Error loading environment vars: {e}")
     sys.exit(1)
+    
+    
+def not_real_tweets():
+    # Initialize Kafka producer
+    bootstrap_servers = os.getenv("BOOTSTRAP_SERVERS") or 'host.docker.internal:9092'
+    producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
+                            value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+    
+    tweets = pd.read_csv("app/data/twitter_validation.csv")
+    
+    for index, row in tweets.iterrows():
+        tweet_data = {
+            'product': str(row['Product']),
+            'tweet': row['Text']
+        }
+        producer.send('tweets', value=tweet_data)
+        producer.flush()
+        print(f"Sent tweet #{index}")
+    print("Sent tweets")
 
 
 def main():
     try:
         parser = argparse.ArgumentParser(
             add_help=True,
-            usage="python scrape [option] ... [arg] ...",
+            usage="python scraper [option] ... [arg] ...",
             description="Twitter Scraper - Scrape tweets from Twitter profiles, hashtags, and bookmarks.",
         )
 
@@ -36,6 +58,13 @@ def main():
         except Exception as e:
             print(f"Error retrieving environment variables: {e}")
             sys.exit(1)
+            
+        # Real mode
+        parser.add_argument(
+            "--real",
+            action="store_true",
+            help="Real tweets will be scraped. If false (default), tweets will be sent from a csv file.",
+        )
 
         # Number of tweets
         parser.add_argument(
@@ -92,6 +121,12 @@ def main():
         )
 
         args = parser.parse_args()
+        
+        # Check if --real is set to False
+        if args.real is False:
+            print("Sending NOT real tweets")
+            not_real_tweets()
+            sys.exit(0)
 
         USER_UNAME = args.user
         USER_PASSWORD = args.password
