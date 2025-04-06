@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: scraper
-    image: tonyq2k3/producer:0.1
+    image: tonyq2k3/scrape-producer:0.1
     imagePullPolicy: Always
     resources:
       limits:
@@ -29,4 +29,4 @@ spec:
         secretKeyRef:
           name: scraper-secret
           key: USER_PASSWORD
-    restartPolicy: Never
+    # restartPolicy: Never
