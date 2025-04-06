@@ -28,7 +28,7 @@ def not_real_tweets():
     for index, row in tweets.iterrows():
         tweet_data = {
             'product': str(row['Product']),
-            'tweet': row['Text']
+            'text': row['Text']
         }
         producer.send('tweets', value=tweet_data)
         producer.flush()
