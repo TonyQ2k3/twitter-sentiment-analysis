@@ -1,4 +1,5 @@
-from pyspark.ml import PipelineModel
+import os
+import sys
 import re
 import nltk
 from kafka import KafkaConsumer
@@ -6,7 +7,27 @@ from json import loads
 from pymongo import MongoClient
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
+from pyspark.ml import PipelineModel
 
+try:
+    from dotenv import load_dotenv
+    print("Loading environment vars")
+    load_dotenv()
+    print("Loaded environment vars\n")
+except Exception as e:
+    print(f"Error loading environment vars: {e}")
+    sys.exit(1)
+
+# Create a new client and connect to the server
+# Establish connection to MongoDB
+try:
+    uri = os.getenv("MONGO_URI")
+    client = MongoClient(uri)
+    database = client["main"]
+    collection = database["tweets"]
+except Exception as e:
+    print(f"Error connecting to MongoDB: {e}")
+    sys.exit(1)
 
 # Only download if not already present (safe for containerized environments)
 try:
@@ -21,9 +42,10 @@ except LookupError:
 
 
 # Setup Spark session
+spark_master = os.getenv("SPARK_MASTER") or "spark://spark-master-svc.default.svc.cluster.local:7077"
 spark = SparkSession.builder \
     .appName("Kafka Pyspark Streaming") \
-    .master("spark://spark-master-svc.default.svc.cluster.local:7077") \
+    .master(spark_master) \
     .getOrCreate()
     
 spark.sparkContext.setLogLevel("ERROR")
@@ -58,9 +80,10 @@ class_index_mapping = { 0: "Negative", 1: "Positive", 2: "Neutral", 3: "Irreleva
 
 
 # Kafka consumer setup
+bootstrap_servers = os.getenv("BOOTSTRAP_SERVERS") or 'host.docker.internal:9092'
 consumer = KafkaConsumer(
     'tweets',
-    bootstrap_servers='kafka-svc.default.svc.cluster.local:9092',
+    bootstrap_servers=bootstrap_servers,
     auto_offset_reset='latest',
     enable_auto_commit=True,
     group_id='tweets-group',
@@ -69,8 +92,9 @@ consumer = KafkaConsumer(
 
 # Process messages from Kafka
 for message in consumer:
-    tweet = message.value[-1]  # get the Text from the list
-    preprocessed_tweet = clean_text(tweet)
+    product = message.value[0]  # get the product from the list
+    text = message.value[-1]  # get the text from the list
+    preprocessed_tweet = clean_text(text)
     
     # Create a DataFrame from the string
     data = [(preprocessed_tweet,),]  
@@ -79,11 +103,21 @@ for message in consumer:
     # Apply the pipeline to transform the DataFrame
     processed_tweets = pipeline.transform(data)
     prediction = processed_tweets.collect()[0][6]
-
-    print("-> Tweet:", tweet)
-    print("-> preprocessed_tweet : ", preprocessed_tweet)
-    print("-> Predicted Sentiment:", prediction)
+    
+    print("-> Tweet:", text)
+    # print("-> preprocessed_tweet : ", preprocessed_tweet)
+    # print("-> Predicted Sentiment:", prediction)
     print("-> Predicted Sentiment classname:", class_index_mapping[int(prediction)])
 
+    tweet_doc = {
+        "product": product,
+        "text": text,
+        "prediction": class_index_mapping[int(prediction)]
+    }
 
+    # Insert document into MongoDB collection
+    collection.insert_one(tweet_doc)
+
+
+    
 # Work in progress ....
