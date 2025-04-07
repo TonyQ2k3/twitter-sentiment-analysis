@@ -7,27 +7,34 @@ from dotenv import load_dotenv
 load_dotenv() 
 
 # Load CSV data
-tweets = pd.read_csv("data/iphone_15_tweets_brief.csv")
+tweets = pd.read_csv("app/data/twitter_validation.csv")
+
+for index, row in tweets.head(5).iterrows():
+    tweet_data = {
+        'product': str(row['Product']),
+        'text': row['Text']
+    }
+    print(tweet_data)
 
 
-# Initialize Kafka producer
-bootstrap_servers = os.getenv("BOOTSTRAP_SERVERS") or 'host.docker.internal:9092'
-producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
-                         value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+# # Initialize Kafka producer
+# bootstrap_servers = os.getenv("BOOTSTRAP_SERVERS") or 'host.docker.internal:9092'
+# producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
+#                          value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
 
-# Send tweets to Kafka
-def send_to_kafka(tweets):
-    for index, row in tweets.iterrows():
-        tweet_data = {
-            'user': str(row['Name']), 
-            'tweet': row['Content']
-        }
-        producer.send('tweets', value=tweet_data)
-        producer.flush()
-        print("Sent tweet")
-    pass
+# # Send tweets to Kafka
+# def send_to_kafka(tweets):
+#     for index, row in tweets.iterrows():
+#         tweet_data = {
+#             'user': str(row['Name']), 
+#             'tweet': row['Content']
+#         }
+#         producer.send('tweets', value=tweet_data)
+#         producer.flush()
+#         print("Sent tweet")
+#     pass
     
     
-if __name__ == "__main__":
-    send_to_kafka(tweets)
+# if __name__ == "__main__":
+#     send_to_kafka(tweets)

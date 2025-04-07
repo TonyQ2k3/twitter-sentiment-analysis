@@ -17,15 +17,19 @@ except Exception as e:
     sys.exit(1)
     
     
-def not_real_tweets():
+def not_real_tweets(number_of_tweets):
+    if number_of_tweets <= 999:
+        n = number_of_tweets
+    else:
+        n = 999
     # Initialize Kafka producer
-    bootstrap_servers = os.getenv("BOOTSTRAP_SERVERS") or 'host.docker.internal:9092'
+    bootstrap_servers = os.getenv("BOOTSTRAP_SERVERS") or 'kafka-svc.default.svc.cluster.local'
     producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
                             value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     
     tweets = pd.read_csv("data/twitter_validation.csv")
     
-    for index, row in tweets.iterrows():
+    for index, row in tweets.head(n).iterrows():
         tweet_data = {
             'product': str(row['Product']),
             'text': row['Text']
@@ -125,7 +129,7 @@ def main():
         # Check if --real is set to False
         if args.real is False:
             print("Sending NOT real tweets")
-            not_real_tweets()
+            not_real_tweets(args.tweets)
             sys.exit(0)
 
         USER_UNAME = args.user
