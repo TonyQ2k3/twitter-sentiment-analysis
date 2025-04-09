@@ -30,15 +30,9 @@ except Exception as e:
     sys.exit(1)
 
 # Only download if not already present (safe for containerized environments)
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
 
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('stopwords')
 
 
 # Setup Spark session
@@ -118,6 +112,4 @@ for message in consumer:
     # Insert document into MongoDB collection
     collection.insert_one(tweet_doc)
 
-
-    
 # Work in progress ....

@@ -4,3 +4,4 @@ pymongo>=4.11.3
 pyspark>=3.5.5
 kafka-python==2.1.2
 python-dotenv>=1.0.0
+setuptools
