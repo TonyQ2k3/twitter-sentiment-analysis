@@ -5,7 +5,7 @@ metadata:
   labels:
     app: sentiment-analysis
 data:
-  IP_SPARK_MASTER: "spark-master-svc.default.svc.cluster.local"
+  IP_SPARK_MASTER: "spark://spark-master-0.spark-headless.default.svc.cluster.local:7077"
   IP_ZOOKEEPER: "zookeeper-svc.default.svc.cluster.local:2181"
   IP_KAFKA_BROKER: "kafka-svc.default.svc.cluster.local"
   IP_CASSANDRA: "cassandra-svc.default.svc.cluster.local"
