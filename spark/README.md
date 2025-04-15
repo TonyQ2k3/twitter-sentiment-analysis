@@ -6,21 +6,8 @@ Basically, the codes will be containerized into containers that submit the tasks
 ```bash
 /opt/bitnami/spark/bin/spark-submit \
  --class org.apache.spark.examples.SparkPi \
+ --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5 \
  --master spark://spark-master-0.spark-headless.default.svc.cluster.local:7077 \
- ./spark_nomaster.py
-```
-
-```
-helm install spark oci://registry-1.docker.io/bitnamicharts/spark
-  --set image.repository=tonyq2k3/task-submitter
-  --set image.tag=0.4
-  --set image.pullPolicy=Never
-  --set global.security.allowInsecureImages=true
-  --set master.containerSecurityContext.readOnlyRootFilesystem=false
-  --set worker.containerSecurityContext.readOnlyRootFilesystem=false
-
-
-export MONGO_URI="blah"
-export BOOTSTRAP_SERVERS="kafka-svc.default.svc.cluster.local"
+ ./spark_task.py
 ```
 
