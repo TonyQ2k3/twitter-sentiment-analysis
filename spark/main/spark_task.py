@@ -99,5 +99,5 @@ for row in predictions:
         "prediction": class_index_mapping[int(row.prediction)]
     }
     collection.insert_one(tweet_doc)
- 
+
 spark.stop()
