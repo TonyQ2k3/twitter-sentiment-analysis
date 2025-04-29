@@ -17,10 +17,16 @@ except Exception as e:
 
 
 def create_reddit_instance():
+    print(
+        os.getenv("CLIENT_ID"),
+        os.getenv("CLIENT_SECRET"),
+        os.getenv("USER"),
+        os.getenv("PASSWORD")
+    )
     return praw.Reddit(
         client_id=os.getenv("CLIENT_ID"),
         client_secret=os.getenv("CLIENT_SECRET"),
-        username=os.getenv("USERNAME"),
+        username=os.getenv("USER"),
         password=os.getenv("PASSWORD"),
         user_agent=os.getenv("USER_AGENT"),
     )
@@ -47,7 +53,7 @@ def search_reddit_posts(reddit, keyword, subreddits=None, limit=10):
 
 def save_to_csv(results, topic="General"):
     print("Saving Tweets to CSV...")
-    now = datetime.now()
+    now = datetime.datetime.now()
     folder_path = "./posts/"
 
     if not os.path.exists(folder_path):

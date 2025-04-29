@@ -1,14 +1,27 @@
 import praw
 import argparse
-import time
+import os
+import datetime
+import sys
+
+# Load .env variables from .env file
+try:
+    from dotenv import load_dotenv
+    print("Loading environment vars")
+    load_dotenv()
+    print("Loaded environment vars\n")
+except Exception as e:
+    print(f"Error loading environment vars: {e}")
+    sys.exit(1)
+
 
 def create_reddit_instance():
     return praw.Reddit(
-        client_id="my client id",
-        client_secret="my client secret",
-        password="my password",
-        user_agent="my user agent",
-        username="my username",
+        client_id=os.getenv("CLIENT_ID"),
+        client_secret=os.getenv("CLIENT_SECRET"),
+        username=os.getenv("USERNAME"),
+        password=os.getenv("PASSWORD"),
+        user_agent=os.getenv("USER_AGENT"),
     )
 
 def search_reddit_posts(reddit, keywords, limit=10):
@@ -21,23 +34,20 @@ def search_reddit_posts(reddit, keywords, limit=10):
         submissions = reddit.subreddit('all').search(query=keyword, limit=limit, sort='new', time_filter='week')
         
         for submission in submissions:
+            created_date = datetime.datetime.fromtimestamp(submission.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
             results.append({
                 'author': submission.author.name if submission.author else 'N/A',
                 'title': submission.title,
-                'created': submission.created_utc
+                'created': created_date
             })
-            if len(results) >= limit:
-                break
     return results
 
 def display_results(results):
     for result in results:
-        print(f"Title: {result['title']}")
-        print(f"URL: {result['url']}")
-        print(f"Score: {result['score']}")
         print(f"Author: {result['author']}")
+        print(f"Title: {result['title']}")
         print(f"Created: {result['created']}")
-        print('-' * 80)
+        print('-' * 20)
 
 
 def main():
