@@ -1,0 +1,5 @@
+venv
+.env
+__pycache__
+scraper_secret.yaml
+app-secret.yaml
