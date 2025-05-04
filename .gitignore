@@ -1,5 +1,7 @@
 venv
 .env
 __pycache__
-scraper_secret.yaml
+*_secret.yaml
 app-secret.yaml
+.terraform
+*.tfstate*
