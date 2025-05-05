@@ -31,7 +31,11 @@ def create_reddit_instance():
         user_agent=os.getenv("USER_AGENT"),
     )
 
-def search_reddit_posts(reddit, keyword, subreddits=None, limit=10):
+
+def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):
+    if subreddits is None or len(subreddits) == 0:
+        subreddits = ['gadgets']
+        
     results = []
     
     for subreddit in subreddits:
@@ -39,20 +43,31 @@ def search_reddit_posts(reddit, keyword, subreddits=None, limit=10):
         print(f"Searching for: {keyword}")
         
         # Crawl posts using the keyword during the last 7 days
-        submissions = reddit.subreddit(subreddit).search(query=keyword, limit=limit, sort='new', time_filter='week')
+        submissions = reddit.subreddit(subreddit).search(query=keyword, limit=limit, time_filter='month')
         
         for submission in submissions:
             created_date = datetime.datetime.fromtimestamp(submission.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
             results.append({
                 'author': submission.author.name if submission.author else 'N/A',
                 'title': submission.title,
+                'score': submission.score,
                 'created': created_date
             })
+            
+            # Load all comments for the post
+            submission.comments.replace_more(limit=None)
+            for comment in submission.comments.list():
+                results.append({
+                    'author': comment.author.name if comment.author else 'N/A',
+                    'title': comment.body,
+                    'score': comment.score,
+                    'created': created_date
+                })
     return results
 
 
 def save_to_csv(results, topic="General"):
-    print("Saving Tweets to CSV...")
+    print("Saving posts to CSV...")
     now = datetime.datetime.now()
     folder_path = "./posts/"
 
@@ -61,7 +76,7 @@ def save_to_csv(results, topic="General"):
         print("Created Folder: {}".format(folder_path))
         
     df = pd.DataFrame(results)
-    df.columns = ['Author', 'Title', 'Date']
+    df.columns = ['Author', 'Title', 'Score', 'Date']
     
     df['Product'] = topic
 

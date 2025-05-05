@@ -38,7 +38,12 @@ def create_reddit_instance():
         user_agent=os.getenv("USER_AGENT"),
     )
 
-def search_reddit_posts(reddit, keyword, subreddits=['all'], limit=10):  
+def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):  
+    count = 0
+    if subreddits is None or len(subreddits) == 0:
+        subreddits = ['gadgets']
+    
+    
     for subreddit in subreddits:
         print(f"Searching in subreddit: {subreddit}")
         print(f"Searching for: {keyword}")
@@ -48,15 +53,34 @@ def search_reddit_posts(reddit, keyword, subreddits=['all'], limit=10):
         
         for submission in submissions:
             created_date = datetime.datetime.fromtimestamp(submission.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
+            # Send the post data to Kafka
             post_data = {
                 'product': keyword,
                 'text': submission.title,
                 'author': submission.author.name if submission.author else 'N/A',
+                'score': submission.score,
                 'created': created_date
             }
             producer.send('reddits', value=post_data)
             producer.flush()
-        print(f"Posts sent to Kafka topic reddits")
+            count += 1
+            
+            # Load all comments
+            submission.comments.replace_more(limit=None)
+            for comment in submission.comments.list():
+                # Send the comment data to Kafka
+                comment_data = {
+                    'product': keyword,
+                    'text': comment.body,
+                    'author': comment.author.name if comment.author else 'N/A',
+                    'score': comment.score,
+                    'created': created_date
+                }
+                producer.send('reddits', value=comment_data)
+                producer.flush()
+                count += 1
+                
+        print(f"Sent {count} posts to Kafka topic: reddits")
 
 
 
