@@ -4,8 +4,8 @@ import argparse
 import os
 import datetime
 import sys
-import pandas as pd
 import json
+import re
 
 # Load .env variables from .env file
 try:
@@ -37,21 +37,34 @@ def create_reddit_instance():
         password=os.getenv("PASSWORD"),
         user_agent=os.getenv("USER_AGENT"),
     )
+    
+
+def is_relevant(submission):
+    url_pattern = r'https?://\S+|www\.\S+'
+    emoji_pattern = r'[\U0001F600-\U0001F64F]|[\U0001F300-\U0001F5FF]|[\U0001F680-\U0001F6FF]|[\U0001F700-\U0001F77F]|[\U0001F800-\U0001F8FF]|[\U0001F900-\U0001F9FF]|[\U0001FA00-\U0001FAFF]'
+    gif_pattern = r'!\[gif\]'
+    deleted_pattern = r'\[deleted\]'
+    # Combine patterns for filtering
+    combined_pattern = f'({url_pattern}|{emoji_pattern}|{gif_pattern}|{deleted_pattern})'
+    
+    return not bool(re.search(combined_pattern, submission.title))
+    
 
 def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):  
     count = 0
     if subreddits is None or len(subreddits) == 0:
         subreddits = ['gadgets']
     
-    
     for subreddit in subreddits:
         print(f"Searching in subreddit: {subreddit}")
         print(f"Searching for: {keyword}")
         
         # Crawl posts using the keyword during the last 7 days
-        submissions = reddit.subreddit(subreddit).search(query=keyword, limit=limit, sort='new', time_filter='week')
+        submissions = reddit.subreddit(subreddit).search(query=keyword, limit=limit, time_filter='month')
         
         for submission in submissions:
+            if not is_relevant(submission):
+                continue
             created_date = datetime.datetime.fromtimestamp(submission.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
             # Send the post data to Kafka
             post_data = {
