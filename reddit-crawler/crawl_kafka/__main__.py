@@ -39,7 +39,7 @@ def create_reddit_instance():
     )
     
 
-def is_relevant(submission):
+def is_relevant(text):
     url_pattern = r'https?://\S+|www\.\S+'
     emoji_pattern = r'[\U0001F600-\U0001F64F]|[\U0001F300-\U0001F5FF]|[\U0001F680-\U0001F6FF]|[\U0001F700-\U0001F77F]|[\U0001F800-\U0001F8FF]|[\U0001F900-\U0001F9FF]|[\U0001FA00-\U0001FAFF]'
     gif_pattern = r'!\[gif\]'
@@ -47,7 +47,7 @@ def is_relevant(submission):
     # Combine patterns for filtering
     combined_pattern = f'({url_pattern}|{emoji_pattern}|{gif_pattern}|{deleted_pattern})'
     
-    return not bool(re.search(combined_pattern, submission.title))
+    return not bool(re.search(combined_pattern, text))
     
 
 def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):  
@@ -63,7 +63,7 @@ def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):
         submissions = reddit.subreddit(subreddit).search(query=keyword, limit=limit, time_filter='month')
         
         for submission in submissions:
-            if not is_relevant(submission):
+            if not is_relevant(submission.title):
                 continue
             created_date = datetime.datetime.fromtimestamp(submission.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
             # Send the post data to Kafka
@@ -82,6 +82,8 @@ def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):
             submission.comments.replace_more(limit=None)
             for comment in submission.comments.list():
                 # Send the comment data to Kafka
+                if not is_relevant(comment.body):
+                    continue
                 comment_data = {
                     'product': keyword,
                     'text': comment.body,
@@ -94,7 +96,6 @@ def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):
                 count += 1
                 
         print(f"Sent {count} posts to Kafka topic: reddits")
-
 
 
 def main():
