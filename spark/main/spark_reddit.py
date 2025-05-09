@@ -41,7 +41,7 @@ schema = StructType([
     StructField("text", StringType(), True),
     StructField("author", StringType(), True),
     StructField("score", IntegerType(), True),
-    StructField("created", StringType(), True)  # Keep as StringType for initial loading
+    StructField("created", StringType(), True)
 ])
  
 # Load the model
@@ -82,31 +82,35 @@ df = spark.read.format("kafka") \
  
 # Parse the JSON string in the value column
 json_df = df.selectExpr("CAST(value AS STRING)")
-json_df.printSchema()
+# json_df.printSchema()
  
 # Convert JSON string to DataFrame with the defined schema
 parsed_df = json_df.select(from_json(col("value"), schema).alias("data")) \
-                   .select("data.*")
+                   .select("data.*") \
+                   .withColumn("original", col("text"))
+
 
 # Clean tweets and remove unwanted characters
 cleaned_df = parsed_df.withColumn("Text", udf(clean_text)(col("text")))
+cleaned_df.printSchema()
 
 # Run the model
 processed_df = pipeline.transform(cleaned_df)
+processed_df.printSchema()
  
 # Make a new dataframe with the predictions
-predictions = processed_df.select("product", "author", "text", "score", "created", "prediction").collect()
+predictions = processed_df.select("product", "author", "original", "score", "created", "prediction").collect()
 
 # Send to MongoDB
 for row in predictions:
-    tweet_doc = {
+    reddit_doc = {
         "product": row.product,
-        "text": row.text,
+        "text": row.original,
         "author": row.author,
         "score": row.score,
         "created": row.created,
         "prediction": class_index_mapping[int(row.prediction)]
     }
-    collection.insert_one(tweet_doc)
+    collection.insert_one(reddit_doc)
 
 spark.stop()
