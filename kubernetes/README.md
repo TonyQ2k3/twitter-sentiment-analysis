@@ -25,6 +25,10 @@ helm install spark oci://registry-1.docker.io/bitnamicharts/spark \
   --set master.containerSecurityContext.readOnlyRootFilesystem=false \
   --set worker.containerSecurityContext.readOnlyRootFilesystem=false \
 ```
+or
+```bash
+helm install spark oci://registry-1.docker.io/bitnamicharts/spark -f spark/values.yaml
+```
 
 ### 1.4. Access the web UI
 ```bash
@@ -54,7 +58,7 @@ kubectl exec -it kafkacat -- /bin/sh
 kafkacat -b $KAFKA_BROKER -L
 
 # Consume tweets from a topic
-kafkacat -b $KAFKA_BROKER -t tweets -C
+kafkacat -b $KAFKA_BROKER -t reddits -C
 ```
 
 
@@ -71,7 +75,7 @@ export MONGO_URI="mongodb://mydatabaseandstuff"
  --class org.apache.spark.examples.SparkPi \
  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5 \
  --master spark://spark-master-0.spark-headless.default.svc.cluster.local:7077 \
- ./spark_task.py
+ ./spark_reddit.py
 ```
 
 ## 2. Running your own job

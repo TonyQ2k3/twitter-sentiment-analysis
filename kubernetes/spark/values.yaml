@@ -1,0 +1,29 @@
+image:
+  repository: tonyq2k3/spark
+  tag: 1.0.1
+  # pullPolicy: Always
+
+worker:
+  replicaCount: 2
+  containerSecurityContext:
+    readOnlyRootFilesystem: false
+  extraEnvVars:
+    - name: MONGO_URI
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: MONGO_URI
+
+master:
+  containerSecurityContext:
+    readOnlyRootFilesystem: false
+  extraEnvVars:
+    - name: MONGO_URI
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: MONGO_URI
+
+global:
+  security:
+    allowInsecureImages: true
