@@ -73,11 +73,12 @@ def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):
             for comment in submission.comments.list():
                 if not is_relevant(comment.body):
                     continue
+                comment_date = datetime.datetime.fromtimestamp(comment.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
                 results.append({
                     'author': comment.author.name if comment.author else 'N/A',
                     'title': comment.body,
                     'score': comment.score,
-                    'created': created_date
+                    'created': comment_date
                 })
     return results
 

@@ -84,12 +84,13 @@ def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):
                 # Send the comment data to Kafka
                 if not is_relevant(comment.body):
                     continue
+                comment_date = datetime.datetime.fromtimestamp(comment.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
                 comment_data = {
                     'product': keyword,
                     'text': comment.body,
                     'author': comment.author.name if comment.author else 'N/A',
                     'score': comment.score,
-                    'created': created_date
+                    'created': comment_date
                 }
                 producer.send('reddits', value=comment_data)
                 producer.flush()
