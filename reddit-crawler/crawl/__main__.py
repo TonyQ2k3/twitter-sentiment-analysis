@@ -44,7 +44,7 @@ def is_relevant(text):
     return not bool(re.search(combined_pattern, text))
 
 
-def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):
+def search_reddit_posts(reddit, keyword, subreddits=['gadgets']):
     if subreddits is None or len(subreddits) == 0:
         subreddits = ['gadgets']
         
@@ -55,15 +55,16 @@ def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):
         print(f"Searching for: {keyword}")
         
         # Crawl posts using the keyword during the last 7 days
-        submissions = reddit.subreddit(subreddit).search(query=keyword, limit=limit, time_filter='month')
+        submissions = reddit.subreddit(subreddit).search(query=keyword, time_filter='year')
         
         for submission in submissions:
             if not is_relevant(submission.title):
                 continue
             created_date = datetime.datetime.fromtimestamp(submission.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
             results.append({
+                'product': keyword,
+                'text': submission.title,
                 'author': submission.author.name if submission.author else 'N/A',
-                'title': submission.title,
                 'score': submission.score,
                 'created': created_date
             })
@@ -75,8 +76,9 @@ def search_reddit_posts(reddit, keyword, subreddits=['gadgets'], limit=10):
                     continue
                 comment_date = datetime.datetime.fromtimestamp(comment.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
                 results.append({
+                    'product': keyword,
+                    'text': comment.body,
                     'author': comment.author.name if comment.author else 'N/A',
-                    'title': comment.body,
                     'score': comment.score,
                     'created': comment_date
                 })
@@ -93,9 +95,7 @@ def save_to_csv(results, topic="General"):
         print("Created Folder: {}".format(folder_path))
         
     df = pd.DataFrame(results)
-    df.columns = ['Author', 'Title', 'Score', 'Date']
-    
-    df['Product'] = topic
+    df.columns = ['product', 'text', 'author', 'score', 'created']
 
     current_time = now.strftime("%Y-%m-%d_%H-%M-%S")
     file_path = f"{folder_path}{topic}_{current_time}.csv"
@@ -118,7 +118,7 @@ def main():
         parser.error("Keyword cannot be empty. Please provide a valid search keyword.")
 
     reddit = create_reddit_instance()
-    results = search_reddit_posts(reddit, args.query, args.subs, args.limit)
+    results = search_reddit_posts(reddit, args.query, args.subs)
     
     # Check if results are empty
     if len(results) == 0:
