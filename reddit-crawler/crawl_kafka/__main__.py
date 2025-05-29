@@ -1,3 +1,6 @@
+# This script crawls Reddit for posts and comments related to a specific keyword
+# and sends the data to a Kafka topic named 'reddits'.
+
 from kafka import KafkaProducer
 import praw
 import argparse

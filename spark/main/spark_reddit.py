@@ -71,7 +71,7 @@ def clean_text(text):
     else:
         return ''
    
-class_index_mapping = { 0: "Negative", 1: "Positive", 2: "Neutral", 3: "Irrelevant" }
+class_index_mapping = { 0: "Negative", 1: "Positive", 2: "Neutral" }
  
  
 # Kafka consumer setup

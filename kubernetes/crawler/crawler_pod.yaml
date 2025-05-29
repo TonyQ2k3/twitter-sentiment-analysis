@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: crawler
-    image: tonyq2k3/reddit-crawler:0.3
+    image: tonyq2k3/reddit-crawler:0.4
     # imagePullPolicy: Always
     resources:
       limits:
