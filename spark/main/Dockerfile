@@ -1,4 +1,4 @@
-# tonyq2k3/task-submitter
+# tonyq2k3/spark
 
 FROM bitnami/spark:3.5.5-debian-12-r2
 

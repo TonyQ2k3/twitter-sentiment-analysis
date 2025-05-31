@@ -3,14 +3,15 @@ import sys
 import re
 from pymongo import MongoClient
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json
+from pyspark.sql.functions import from_json, udf, col
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
-from pyspark.sql.functions import *
 from pyspark.sql.types import *
-from pyspark.ml import PipelineModel
+
+import mlflow
+import mlflow.spark
+from dotenv import load_dotenv
  
 try:
-    from dotenv import load_dotenv
     print("Loading environment vars")
     load_dotenv()
     print("Loaded environment vars\n")
@@ -24,20 +25,16 @@ try:
     uri = os.getenv("MONGO_URI")
     client = MongoClient(uri)
     database = client["main"]
-    collection = database["reddits"]
 except Exception as e:
     print(f"Error connecting to MongoDB: {e}")
     sys.exit(1)
  
- 
-spark = SparkSession.builder \
-    .appName("Kafka Pyspark Streaming") \
-    .getOrCreate()
-    
-spark.sparkContext.setLogLevel("ERROR")
+class_index_mapping = { 0: "Negative", 1: "Positive", 2: "Neutral" }
+
  
 schema = StructType([
     StructField("product", StringType(), True),
+    StructField("requester_id", StringType(), True),
     StructField("text", StringType(), True),
     StructField("author", StringType(), True),
     StructField("score", IntegerType(), True),
@@ -45,8 +42,18 @@ schema = StructType([
 ])
  
 # Load the model
-pipeline = PipelineModel.load("logistic_regression_model.pkl")
- 
+# pipeline = PipelineModel.load("logistic_regression_model.pkl")
+
+def load_model_from_mlflow(model_uri):
+    """
+    Load a model from MLflow.
+    :param model_uri: URI of the model in MLflow.
+    :return: Loaded model.
+    """
+    # Load the model
+    model = mlflow.spark.load_model(model_uri)
+    return model
+
 # Clean tweets and remove unwanted characters
 def clean_text(text):
     if text is not None:
@@ -70,47 +77,60 @@ def clean_text(text):
         return text
     else:
         return ''
-   
-class_index_mapping = { 0: "Negative", 1: "Positive", 2: "Neutral" }
- 
- 
-# Kafka consumer setup
-df = spark.read.format("kafka") \
-    .option("kafka.bootstrap.servers", "kafka-svc.default.svc.cluster.local:9092") \
-    .option("subscribe", "reddits") \
-    .load()
- 
-# Parse the JSON string in the value column
-json_df = df.selectExpr("CAST(value AS STRING)")
-# json_df.printSchema()
- 
-# Convert JSON string to DataFrame with the defined schema
-parsed_df = json_df.select(from_json(col("value"), schema).alias("data")) \
-                   .select("data.*") \
-                   .withColumn("original", col("text"))
 
 
-# Clean tweets and remove unwanted characters
-cleaned_df = parsed_df.withColumn("Text", udf(clean_text)(col("text")))
-cleaned_df.printSchema()
+if __name__ == "__main__":
+    mlflow.set_tracking_uri("https://dagshub.com/TranChucThien/kltn-sentiment-monitoring-mlops.mlflow")
+    
+    # Initialize Spark session
+    spark = SparkSession.builder \
+        .appName("Kafka Pyspark Streaming") \
+        .getOrCreate()
+    spark.sparkContext.setLogLevel("ERROR")
+    
+    # Load the model from MLflow
+    model_uri = os.getenv("MODEL_URI") or "models:/CountVectorizer_Model/1"
+    pipeline = load_model_from_mlflow(model_uri)
+    
+    # Kafka consumer setup
+    df = spark.read.format("kafka") \
+        .option("kafka.bootstrap.servers", "kafka-svc.default.svc.cluster.local:9092") \
+        .option("subscribe", "reddits") \
+        .load()
+    
+    # Parse the JSON string in the value column
+    json_df = df.selectExpr("CAST(value AS STRING)")
+    
+    # Convert JSON string to DataFrame with the defined schema
+    parsed_df = json_df.select(from_json(col("value"), schema).alias("data")) \
+                    .select("data.*") \
+                    .withColumn("original", col("text"))
 
-# Run the model
-processed_df = pipeline.transform(cleaned_df)
-processed_df.printSchema()
- 
-# Make a new dataframe with the predictions
-predictions = processed_df.select("product", "author", "original", "score", "created", "prediction").collect()
 
-# Send to MongoDB
-for row in predictions:
-    reddit_doc = {
-        "product": row.product,
-        "text": row.original,
-        "author": row.author,
-        "score": row.score,
-        "created": row.created,
-        "prediction": class_index_mapping[int(row.prediction)]
-    }
-    collection.insert_one(reddit_doc)
+    # Clean tweets and remove unwanted characters
+    cleaned_df = parsed_df.withColumn("Text", udf(clean_text)(col("text")))
+    # cleaned_df.printSchema()  
 
-spark.stop()
+    # Run the model
+    processed_df = pipeline.transform(cleaned_df)
+    processed_df.printSchema()
+    
+    # Make a new dataframe with the predictions
+    predictions = processed_df.select("product", "requester_id", "author", "original", "score", "created", "prediction").collect()
+    
+    # Send to MongoDB
+
+    for row in predictions:
+        reddit_doc = {
+            "product": row.product,
+            "text": row.original,
+            "author": row.author,
+            "score": row.score,
+            "created": row.created,
+            "prediction": class_index_mapping[int(row.prediction)]
+        }
+        collection_name = f"reddits_{row.requester_id}"
+        collection = database[collection_name]
+        collection.insert_one(reddit_doc)
+    spark.stop()
+    
