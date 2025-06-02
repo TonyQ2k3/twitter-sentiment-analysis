@@ -29,7 +29,7 @@ kubectl exec -it spark-master-0 -- /bin/bash
 
 /opt/bitnami/spark/bin/spark-submit \
  --class org.apache.spark.examples.SparkPi \
- --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5 \
+ --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5,org.mlflow:mlflow-spark_2.12:2.16.2 \
  --master spark://spark-master-0.spark-headless.default.svc.cluster.local:7077 \
  ./spark_task.py
 ```

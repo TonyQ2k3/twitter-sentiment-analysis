@@ -1,6 +1,6 @@
 image:
   repository: tonyq2k3/spark
-  tag: 1.0.1
+  tag: 2.0.0
   # pullPolicy: Always
 
 worker:

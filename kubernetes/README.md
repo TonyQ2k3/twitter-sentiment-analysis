@@ -6,12 +6,12 @@ The /kubernetes folder contains YAML to deploy all necessary resources.
 ### 1.1. Build the base image
 ```bash
 cd spark/main/
-docker build -t tonyq2k3/task-submitter:0.4 .
+docker build -t tonyq2k3/spark .
 ```
 
 ### 1.2. Load the image into minikube (if you're using it)
 ```bash
-minikube image load tonyq2k3/task-submitter:0.4
+minikube image load tonyq2k3/spark
 ```
 
 ### 1.3. Run the cluster using Helm
@@ -61,6 +61,17 @@ kafkacat -b $KAFKA_BROKER -L
 kafkacat -b $KAFKA_BROKER -t reddits -C
 ```
 
+## 5. Deploy MinIO DFS
+```bash
+helm install minio bitnami/minio --namespace default --set accessKey.password=admin --set secretKey.password=password
+
+kubectl port-forward svc/minio 9000:9000
+```
+
+MinIO's URL can be used at `minio.default.svc.cluster.local:9000`
+
+kubectl get secret --namespace default minio -o jsonpath="{.data.root-user}" | base64 -d
+kubectl get secret --namespace default minio -o jsonpath="{.data.root-password}" | base64 -d
 
 -----------------------------------------------------------
 # B. Submitting a job 
@@ -76,6 +87,13 @@ export MONGO_URI="mongodb://mydatabaseandstuff"
  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5 \
  --master spark://spark-master-0.spark-headless.default.svc.cluster.local:7077 \
  ./spark_reddit.py
+
+
+/opt/bitnami/spark/bin/spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --packages org.apache.hadoop:hadoop-aws:3.4.1 \
+  --master spark://spark-master-0.spark-headless.default.svc.cluster.local:7077 \
+  ./test.py
 ```
 
 ## 2. Running your own job
