@@ -3,7 +3,7 @@ It's built based on the code in [reddit-crawler](../reddit-crawler)
 
 
 ```bash
-curl -X POST http://localhost:8000/crawl \
+curl -X POST http://localhost:8090/crawl \
   -H "Content-Type: application/json" \
   -d '{
     "keyword": "tesla",

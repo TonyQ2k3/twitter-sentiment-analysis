@@ -27,13 +27,14 @@ producer = KafkaProducer(
 
 # FastAPI app
 app = FastAPI()
-portNumber = os.getenv("PORT", 8090)
+# portNumber = os.getenv("PORT", 8090)
 
 # Allowed time filters
 TimeFilter = Literal["all", "day", "hour", "month", "week", "year"]
 
 # Request model
 class CrawlRequest(BaseModel):
+    requester_id: str
     keyword: str
     subreddits: Optional[List[str]] = Field(default=["gadgets"])
     limit: Optional[int] = Field(default=10, gt=0)
@@ -59,7 +60,7 @@ def is_relevant(text):
     return not bool(re.search(combined_pattern, text))
 
 
-def crawl_reddit_data(keyword: str, subreddits: List[str], limit: int, time_filter: str):
+def crawl_reddit_data(requester_id: str, keyword: str, subreddits: List[str], limit: int, time_filter: str):
     reddit = create_reddit_instance()
     count = 0
     for subreddit in subreddits:
@@ -70,6 +71,7 @@ def crawl_reddit_data(keyword: str, subreddits: List[str], limit: int, time_filt
             created_date = datetime.datetime.fromtimestamp(submission.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
             post_data = {
                 'product': keyword,
+                'requester_id': requester_id,
                 'text': submission.title,
                 'author': submission.author.name if submission.author else 'N/A',
                 'score': submission.score,
@@ -86,6 +88,7 @@ def crawl_reddit_data(keyword: str, subreddits: List[str], limit: int, time_filt
                 comment_date = datetime.datetime.fromtimestamp(comment.created_utc, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
                 comment_data = {
                     'product': keyword,
+                    'requester_id': requester_id,
                     'text': comment.body,
                     'author': comment.author.name if comment.author else 'N/A',
                     'score': comment.score,
@@ -103,6 +106,7 @@ def start_crawl(request: CrawlRequest, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=400, detail="Keyword cannot be empty")
     background_tasks.add_task(
         crawl_reddit_data,
+        requester_id=request.requester_id,
         keyword=request.keyword,
         subreddits=request.subreddits,
         limit=request.limit,
@@ -111,7 +115,3 @@ def start_crawl(request: CrawlRequest, background_tasks: BackgroundTasks):
     return {
         "message": f"Crawl started for '{request.keyword}' in subreddits {request.subreddits} with time filter '{request.time_filter}'"
     }
-    
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=portNumber)
