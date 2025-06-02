@@ -25,6 +25,7 @@ try:
     uri = os.getenv("MONGO_URI")
     client = MongoClient(uri)
     database = client["main"]
+    print("Connected to MongoDB: ", uri)
 except Exception as e:
     print(f"Error connecting to MongoDB: {e}")
     sys.exit(1)
@@ -80,17 +81,16 @@ def clean_text(text):
 
 
 if __name__ == "__main__":
-    mlflow.set_tracking_uri("https://dagshub.com/TranChucThien/kltn-sentiment-monitoring-mlops.mlflow")
-    
-    # Initialize Spark session
+    local_model_path = "./model"
+
     spark = SparkSession.builder \
         .appName("Kafka Pyspark Streaming") \
         .getOrCreate()
-    spark.sparkContext.setLogLevel("ERROR")
-    
-    # Load the model from MLflow
-    model_uri = os.getenv("MODEL_URI") or "models:/CountVectorizer_Model/1"
-    pipeline = load_model_from_mlflow(model_uri)
+
+    # Load from local path on driver (and workers, since model exists now)
+    print("Loading model from local path...")
+    pipeline = mlflow.spark.load_model(local_model_path)
+    print("Loaded model from local path.")
     
     # Kafka consumer setup
     df = spark.read.format("kafka") \
@@ -109,7 +109,8 @@ if __name__ == "__main__":
 
     # Clean tweets and remove unwanted characters
     cleaned_df = parsed_df.withColumn("Text", udf(clean_text)(col("text")))
-    # cleaned_df.printSchema()  
+    cleaned_df.printSchema()  
+
 
     # Run the model
     processed_df = pipeline.transform(cleaned_df)

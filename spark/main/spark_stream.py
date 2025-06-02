@@ -66,15 +66,15 @@ def clean_text(text):
 
 
 if __name__ == "__main__":
-    mlflow.set_tracking_uri("https://dagshub.com/TranChucThien/kltn-sentiment-monitoring-mlops.mlflow")
 
     spark = SparkSession.builder \
         .appName("Kafka Pyspark Streaming") \
         .getOrCreate()
-    spark.sparkContext.setLogLevel("ERROR")
 
-    model_uri = os.getenv("MODEL_URI") or "models:/CountVectorizer_Model/1"
-    pipeline = load_model_from_mlflow(model_uri)
+    # Load from local path on driver (and workers, since model exists now)
+    print("Loading model from local path...")
+    local_model_path = "./model"
+    pipeline = mlflow.spark.load_model(local_model_path)
 
     @udf(StringType())
     def clean_text_udf(text):
