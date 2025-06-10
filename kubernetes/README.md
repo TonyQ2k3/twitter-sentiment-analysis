@@ -73,6 +73,24 @@ MinIO's URL can be used at `minio.default.svc.cluster.local:9000`
 kubectl get secret --namespace default minio -o jsonpath="{.data.root-user}" | base64 -d
 kubectl get secret --namespace default minio -o jsonpath="{.data.root-password}" | base64 -d
 
+## 6. Deploy Redis
+```bash
+helm install redis bitnami/redis -f redis/values.yaml
+```
+
+## 7. Deploy Monitoring (WIP)
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+```
+
+```bash
+helm install prometheus prometheus-community/prometheus
+helm install loki grafana/loki-stack --set grafana.enabled=false,prometheus.enabled=false
+helm install grafana grafana/grafana
+```
+
 -----------------------------------------------------------
 # B. Submitting a job 
 

@@ -1,0 +1,28 @@
+architecture: standalone # Change to replication for HA
+
+auth:
+  enabled: true  # Set to true and define password for production
+  password: password
+
+master:
+  persistence:
+    enabled: false  # Set to true to persist data between pod restarts
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  service:
+    type: ClusterIP
+    port: 6379
+
+# Disable replicas for simplicity; set to 1+ for HA
+replica:
+  replicaCount: 0
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false  # Enable if using Prometheus Operator
