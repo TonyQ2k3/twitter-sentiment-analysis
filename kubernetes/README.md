@@ -16,17 +16,6 @@ minikube image load tonyq2k3/spark
 
 ### 1.3. Run the cluster using Helm
 ```bash
-helm install spark oci://registry-1.docker.io/bitnamicharts/spark \
-  --set image.repository=tonyq2k3/task-submitter \
-  --set image.tag=0.4 \
-  --set image.pullPolicy=Always \
-  --set worker.replicaCount=3
-  --set global.security.allowInsecureImages=true \
-  --set master.containerSecurityContext.readOnlyRootFilesystem=false \
-  --set worker.containerSecurityContext.readOnlyRootFilesystem=false \
-```
-or
-```bash
 helm install spark oci://registry-1.docker.io/bitnamicharts/spark -f spark/values.yaml
 ```
 
@@ -36,10 +25,9 @@ kubectl port-forward --namespace default svc/spark-master-svc 80:80
 ```
 
 
-## 2. Deploy the scraper
-For more information on what commands to run inside the app container, check the README in [/app/](/app/)
+## 2. Deploy the crawler server
 ```bash
-kubectl apply -f kubernetes/scraper
+kubectl apply -f kubernetes/crawler-server
 ```
 
 
@@ -61,35 +49,42 @@ kafkacat -b $KAFKA_BROKER -L
 kafkacat -b $KAFKA_BROKER -t reddits -C
 ```
 
-## 5. Deploy MinIO DFS
-```bash
-helm install minio bitnami/minio --namespace default --set accessKey.password=admin --set secretKey.password=password
-
-kubectl port-forward svc/minio 9000:9000
-```
-
-MinIO's URL can be used at `minio.default.svc.cluster.local:9000`
-
-kubectl get secret --namespace default minio -o jsonpath="{.data.root-user}" | base64 -d
-kubectl get secret --namespace default minio -o jsonpath="{.data.root-password}" | base64 -d
-
-## 6. Deploy Redis
+## 5. Deploy Redis
 ```bash
 helm install redis bitnami/redis -f redis/values.yaml
 ```
 
-## 7. Deploy Monitoring (WIP)
+## 6. Deploy Monitoring (WIP)
+Create the monitoring namespace'
 ```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+kubectl create namespace monitoring
+```
+
+Add Helm Repositories
+```bash
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 ```
 
+Deploy monitoring
 ```bash
-helm install prometheus prometheus-community/prometheus
-helm install loki grafana/loki-stack --set grafana.enabled=false,prometheus.enabled=false
-helm install grafana grafana/grafana
+helm install loki-stack grafana/loki-stack -n monitoring -f monitoring/values.yaml
 ```
+
+Access the Grafana UI
+```bash
+kubectl port-forward -n monitoring svc/loki-stack-grafana 8880:80
+```
+
+Get the password for `admin`
+```bash
+kubectl get secret -n monitoring loki-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+```
+
+All data source should already be configured, so start importing dashboard:
++ `13639`
++ `15757`
++ `15760`
 
 -----------------------------------------------------------
 # B. Submitting a job 

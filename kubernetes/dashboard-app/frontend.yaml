@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-frontend-svc
+spec:
+  selector:
+    app: dashboard-frontend
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-frontend
+spec:
+  selector:
+    matchLabels:
+      app: dashboard-frontend
+  template:
+    metadata:
+      labels:
+        app: dashboard-frontend
+    spec:
+      containers:
+      - name: dashboard-frontend-c
+        image: tonyq2k3/dashboard-frontend:1.0
+        env:
+          - name: REACT_APP_API
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: IP_BACKEND
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: "0.5"
+        ports:
+        - containerPort: 3000
