@@ -81,16 +81,15 @@ def clean_text(text):
 
 
 if __name__ == "__main__":
-    local_model_path = "./model"
-
+    mlflow.set_tracking_uri("https://dagshub.com/TranChucThien/kltn-sentiment-monitoring-mlops.mlflow")
+    
     spark = SparkSession.builder \
         .appName("Kafka Pyspark Streaming") \
         .getOrCreate()
 
-    # Load from local path on driver (and workers, since model exists now)
-    print("Loading model from local path...")
-    pipeline = mlflow.spark.load_model(local_model_path)
-    print("Loaded model from local path.")
+    # Load from Dagshub
+    model_uri = os.getenv("MODEL_URI", "models:/reddit-sentiment-analysis/Production")
+    pipeline = mlflow.spark.load_model(model_uri)
     
     # Kafka consumer setup
     df = spark.read.format("kafka") \
