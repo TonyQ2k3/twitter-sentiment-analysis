@@ -53,7 +53,7 @@ kafkacat -b $KAFKA_BROKER -t reddits -C
 ```bash
 kubectl create ns redis
 
-helm install redis bitnami/redis -f redis/values.yaml
+helm install redis bitnami/redis -f redis/values.yaml -n redis
 ```
 
 ## 6. Deploy Monitoring (WIP)
