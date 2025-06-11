@@ -7,6 +7,6 @@ data:
   IP_ZOOKEEPER: "zookeeper-svc.default.svc.cluster.local:2181"
   IP_KAFKA_BROKER: "kafka-svc.default.svc.cluster.local"
   IP_CASSANDRA: "cassandra-svc.default.svc.cluster.local"
-  IP_BACKEND: "http://backend-svc.default.svc.cluster.local"
+  IP_BACKEND: "http://dashboard-backend-svc.default.svc.cluster.local"
   IP_REDIS: "redis-master.redis.svc.cluster.local"
   IP_CRAWL_API: "http://crawler-svc.default.svc.cluster.local:8090"
