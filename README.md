@@ -25,3 +25,8 @@ The repo structure is as follows:
     - `redis`
     - `dashboard`
 + `/spark`: Contains codes that serves as "tasks" to submit into Apache Spark. Check the folder's README for more info.
+
+Deploy cluster:
+```bash
+aws eks update-kubeconfig --name devops-eks-cluster --region us-east-1
+```
