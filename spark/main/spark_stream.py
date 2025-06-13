@@ -66,15 +66,14 @@ def clean_text(text):
 
 
 if __name__ == "__main__":
-
+    # Initialize Spark session
     spark = SparkSession.builder \
         .appName("Kafka Pyspark Streaming") \
         .getOrCreate()
 
-    # Load from local path on driver (and workers, since model exists now)
-    print("Loading model from local path...")
-    local_model_path = "./model"
-    pipeline = mlflow.spark.load_model(local_model_path)
+    # Track and load model
+    model_uri = os.getenv("MODEL_URI", "models:/reddit-sentiment-analysis/Production")
+    pipeline = mlflow.spark.load_model(model_uri)
 
     @udf(StringType())
     def clean_text_udf(text):
@@ -84,15 +83,20 @@ if __name__ == "__main__":
         if batch_df.isEmpty():
             return
 
+        # Parse JSON to Dataframe + Clean data
         parsed_df = batch_df.selectExpr("CAST(value AS STRING)") \
             .select(from_json(col("value"), schema).alias("data")) \
             .select("data.*") \
             .withColumn("original", col("text")) \
             .withColumn("Text", clean_text_udf(col("text")))
 
+        # Run the model
         processed_df = pipeline.transform(parsed_df)
 
+        # Make a new dataframe with the predictions
         results = processed_df.select("product", "requester_id", "author", "original", "score", "created", "prediction")
+        
+        # Send to users's personal sentiment database
         for row in results.collect():
             reddit_doc = {
                 "product": row.product,
