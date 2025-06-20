@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: dashboard-frontend-c
-        image: tonyq2k3/dashboard-frontend:1.1
+        image: tonyq2k3/dashboard-frontend:1.2
         env:
           - name: REACT_APP_API
             valueFrom:

@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: dashboard-backend-c
-        image: tonyq2k3/dashboard-backend:1.0
+        image: tonyq2k3/dashboard-backend:1.2
         env:
           - name: MONGO_URI
             valueFrom:
